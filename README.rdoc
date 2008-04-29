@@ -1,0 +1,73 @@
+= Stencil
+
+The Stencil plugin adds support for bundling helpers, along with any state they need into first-class objects.
+ 
+For instance, if I had a stencil called Calendar:
+
+  class Calendar < Stencil
+  
+    def to_s
+      "A Calendar; today is: #{current_date}"
+    end
+    
+    private
+    
+    def current_date
+      Date.today
+    end
+  
+  end
+  
+... in my view, I could instantiate (and get the output) by:
+
+  <%= calendar %>
+  
+How this is accomplished is very simple.  Since the view doesn't [presumably] have a +calendar+ method, it attempts to find a Stencil subclass to autoload by the same name.  Finding Calendar, it creates an instance and returns it.
+
+Inside a stencil, all methods available in the template are automatically available, as in this example using +content_tag+:
+
+  class Calendar < Stencil
+
+    def to_s
+      content_tag(:div, "Some Content", :class => 'calendar')
+    end
+
+  end
+
+You can pass arguments (including a block) to the method, using a normal +initialize+ method to capture the arguments and assign them as you wish:
+
+In the view:
+
+  <%= calendar @trip.starts_on %>
+  
+In the stencil:
+
+  class Calendar < Stencil
+  
+    def initialize(date=Date.today)
+      @date = date
+    end
+
+    def to_s
+      content_tag(:div, "Calendar centered on #@date", :class => 'calendar')
+    end
+
+  end
+  
+In these examples I've shown using +to_s+ to return the output, but the preferred method is to use the +draw+ method, since you can return any arbitrary object from it -- calling to +to_s+ is handled automatically for you.
+
+Here's an example:
+  
+class Calendar < Stencil
+
+  # ... stuff above ...
+  
+  def draw
+    SomeObject.new # No need for +to_s+
+  end
+  
+end
+
+This can be useful if you need to build a structure of objects but don't want to remember to call +to_s+ on an aggregated result -- or if you just don't like overriding +to_s+.
+
+  
